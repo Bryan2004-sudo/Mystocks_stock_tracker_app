@@ -1,9 +1,16 @@
+
 "use client";
 
 import Link from "next/link";
 import { Menu, LogOut } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
 import { NAV_ITEMS } from "@/lib/constants";
+import { signOut } from "@/lib/actions/auth.actions";
+
 import { Button } from "@/components/ui/button";
+
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -13,24 +20,59 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { useRouter } from "next/navigation";
+
 import {
     Avatar,
     AvatarFallback,
     AvatarImage,
 } from "@/components/ui/avatar";
 
-const UserDropdown = () => {
+type User = {
+    id: string;
+    name: string;
+    email: string;
+    image?: string | null;
+};
+
+type UserDropdownProps = {
+    user: User;
+};
+
+const UserDropdown = ({ user }: UserDropdownProps) => {
     const router = useRouter();
 
-    const handleSignOut = () => {
-        router.push("/sign-in");
+    const handleSignOut = async () => {
+        try {
+            const result = await signOut();
+
+            if (!result.success) {
+                toast.error("Failed to sign out", {
+                    description: result.error,
+                });
+                return;
+            }
+
+            toast.success("Signed out successfully");
+
+            router.replace("/sign-in");
+            router.refresh();
+        } catch (error) {
+            console.error("Sign out error:", error);
+
+            toast.error("Failed to sign out", {
+                description:
+                    error instanceof Error
+                        ? error.message
+                        : "Something went wrong.",
+            });
+        }
     };
 
-    const user = {
-        name: "John",
-        email: "contact@jsmastery.com",
-    };
+    const userInitial =
+        user.name?.trim().charAt(0).toUpperCase() || "U";
+
+    const avatarUrl =
+        user.image || "https://github.com/shadcn.png";
 
     return (
         <DropdownMenu>
@@ -42,11 +84,12 @@ const UserDropdown = () => {
                 >
                     <Avatar className="h-8 w-8 shrink-0">
                         <AvatarImage
-                            src="https://github.com/shadcn.png"
+                            src={avatarUrl}
                             alt={user.name}
                         />
+
                         <AvatarFallback className="bg-yellow-500 text-yellow-900 text-sm font-bold">
-                            {user.name[0]}
+                            {userInitial}
                         </AvatarFallback>
                     </Avatar>
 
@@ -70,11 +113,12 @@ const UserDropdown = () => {
                     <div className="flex items-center gap-3 py-2">
                         <Avatar className="h-10 w-10 shrink-0">
                             <AvatarImage
-                                src="https://github.com/shadcn.png"
+                                src={avatarUrl}
                                 alt={user.name}
                             />
+
                             <AvatarFallback className="bg-yellow-500 text-yellow-900 text-sm font-bold">
-                                {user.name[0]}
+                                {userInitial}
                             </AvatarFallback>
                         </Avatar>
 
@@ -82,6 +126,7 @@ const UserDropdown = () => {
                             <span className="text-sm font-medium text-gray-100">
                                 {user.name}
                             </span>
+
                             <span className="truncate text-xs text-gray-400">
                                 {user.email}
                             </span>
@@ -138,7 +183,10 @@ const UserDropdown = () => {
 
                 {/* Log Out */}
                 <DropdownMenuItem
-                    onClick={handleSignOut}
+                    onSelect={(event) => {
+                        event.preventDefault();
+                        void handleSignOut();
+                    }}
                     className="cursor-pointer text-gray-100 font-medium focus:bg-transparent focus:text-yellow-500 transition-colors"
                 >
                     <LogOut className="h-4 w-4 mr-2" />

@@ -1,17 +1,23 @@
 "use client";
 
 import { useForm } from "react-hook-form";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
 import InputField from "@/components/forms/InputField";
-import { Button } from "@/components/ui/button";
 import SelectField from "@/components/forms/SelectField";
 import { CountrySelectField } from "@/components/forms/CountrySelectField";
+import FooterLink from "@/components/forms/FooterLink";
+
+import { Button } from "@/components/ui/button";
 
 import {
     INVESTMENT_GOALS,
     PREFERRED_INDUSTRIES,
     RISK_TOLERANCE_OPTIONS,
 } from "@/lib/constants";
-import FooterLink from "@/components/forms/FooterLink";
+
+import { signUpWithEmail } from "@/lib/actions/auth.actions";
 
 type SignUpFormData = {
     fullname: string;
@@ -24,6 +30,7 @@ type SignUpFormData = {
 };
 
 const SignUp = () => {
+    const router = useRouter();
     const {
         register,
         handleSubmit,
@@ -44,21 +51,46 @@ const SignUp = () => {
 
     const onSubmit = async (data: SignUpFormData) => {
         try {
-            console.log("Sign-up form validated:", {
-                fullname: data.fullname,
+            const result = await signUpWithEmail({
                 email: data.email,
+                password: data.password,
+                fullName: data.fullname,
                 country: data.country,
                 investmentGoals: data.investmentGoals,
                 riskTolerance: data.riskTolerance,
                 preferredIndustry: data.preferredIndustry,
             });
+
+            if (result.success) {
+                toast.success("Account created successfully!");
+
+                if (result.warning) {
+                    toast.warning(result.warning);
+                }
+
+                router.push("/");
+                return;
+            }
+
+            toast.error("Sign up failed", {
+                description:
+                    result.error ||
+                    "Failed to create an account.",
+            });
         } catch (error) {
-            console.error("Sign-up error:", error);
+            console.error("Sign up error:", error);
+
+            toast.error("Sign up failed", {
+                description:
+                    error instanceof Error
+                        ? error.message
+                        : "Failed to create an account.",
+            });
         }
     };
 
     return (
-        <div>
+        <div className="w-full">
             <h1 className="form-title">
                 Sign Up &amp; Personalize
             </h1>
@@ -70,14 +102,15 @@ const SignUp = () => {
                 <InputField
                     name="fullname"
                     label="Full Name"
-                    placeholder="John Doe"
+                    placeholder="Adrian | JS Mastery"
                     register={register}
                     error={errors.fullname}
                     validation={{
                         required: "Full name is required",
                         minLength: {
                             value: 2,
-                            message: "Name must be at least 2 characters",
+                            message:
+                                "Name must be at least 2 characters",
                         },
                     }}
                 />
@@ -85,14 +118,16 @@ const SignUp = () => {
                 <InputField
                     name="email"
                     label="Email"
-                    placeholder="contact@jsmastery.com"
+                    type="email"
+                    placeholder="contact@jsmastery.pro"
                     register={register}
                     error={errors.email}
                     validation={{
                         required: "Email is required",
                         pattern: {
                             value: /^[^\s@]+@[^\s@]+\.[^\s@]+$/,
-                            message: "Enter a valid email address",
+                            message:
+                                "Enter a valid email address",
                         },
                     }}
                 />
@@ -100,6 +135,7 @@ const SignUp = () => {
                 <InputField
                     name="password"
                     label="Password"
+                    type="password"
                     placeholder="Enter a strong password"
                     register={register}
                     error={errors.password}
@@ -107,7 +143,8 @@ const SignUp = () => {
                         required: "Password is required",
                         minLength: {
                             value: 8,
-                            message: "Password must be at least 8 characters",
+                            message:
+                                "Password must be at least 8 characters",
                         },
                     }}
                 />
@@ -153,13 +190,18 @@ const SignUp = () => {
                 <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="yellow-btn w-full mt-5"
+                    className="yellow-btn mt-8 w-full"
                 >
                     {isSubmitting
                         ? "Creating Account..."
                         : "Start Your Investing Journey"}
                 </Button>
-                <FooterLink text="Already have an account? " linkText="Sign in" href="/sign-in"></FooterLink>
+
+                <FooterLink
+                    text="Already have an account? "
+                    linkText="Sign in"
+                    href="/sign-in"
+                />
             </form>
         </div>
     );

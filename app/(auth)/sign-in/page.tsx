@@ -1,9 +1,14 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+
 import InputField from "@/components/forms/InputField";
+import FooterLink from "@/components/forms/FooterLink";
 import { Button } from "@/components/ui/button";
+import { signInWithEmail } from "@/lib/actions/auth.actions";
 
 type SignInFormData = {
     email: string;
@@ -11,6 +16,7 @@ type SignInFormData = {
 };
 
 const SignIn = () => {
+    const router = useRouter();
     const {
         register,
         handleSubmit,
@@ -23,14 +29,39 @@ const SignIn = () => {
         mode: "onBlur",
     });
 
-    const onSubmit = async (_data: SignInFormData) => {
-        // Connect your authentication logic here.
-        console.info("Sign-in form validated.");
+    const onSubmit = async (data: SignInFormData) => {
+        try {
+            const result = await signInWithEmail({
+                email: data.email,
+                password: data.password,
+            });
+
+            if (result.success) {
+                toast.success("Signed in successfully!");
+                router.push("/");
+                router.refresh();
+                return;
+            }
+
+            toast.error("Sign in failed", {
+                description:
+                    result.error || "Invalid email or password.",
+            });
+        } catch (error) {
+            console.error("Sign in error:", error);
+
+            toast.error("Sign in failed", {
+                description:
+                    error instanceof Error
+                        ? error.message
+                        : "Failed to sign in.",
+            });
+        }
     };
 
     return (
         <div className="w-full">
-            <h1 className="form-title mb-8 text-3xl font-bold text-white">
+            <h1 className="form-title">
                 Welcome back
             </h1>
 
@@ -41,6 +72,7 @@ const SignIn = () => {
                 <InputField
                     name="email"
                     label="Email"
+                    type="email"
                     placeholder="contact@jsmastery.com"
                     register={register}
                     error={errors.email}
@@ -56,6 +88,7 @@ const SignIn = () => {
                 <InputField
                     name="password"
                     label="Password"
+                    type="password"
                     placeholder="Enter your password"
                     register={register}
                     error={errors.password}
@@ -67,21 +100,17 @@ const SignIn = () => {
                 <Button
                     type="submit"
                     disabled={isSubmitting}
-                    className="yellow-btn mt-8 h-11 w-full rounded-lg font-semibold"
+                    className="yellow-btn mt-8 w-full"
                 >
                     {isSubmitting ? "Signing In..." : "Sign In"}
                 </Button>
-            </form>
 
-            <p className="mt-8 text-center text-sm text-gray-400">
-                Don't have an account?{" "}
-                <Link
+                <FooterLink
+                    text="Don't have an account? "
+                    linkText="Create an account"
                     href="/sign-up"
-                    className="font-medium text-gray-200 transition-colors hover:text-yellow-500"
-                >
-                    Create an account
-                </Link>
-            </p>
+                />
+            </form>
         </div>
     );
 };

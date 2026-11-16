@@ -1,16 +1,29 @@
+"use client";
+
 import Link from "next/link";
 
-const FooterLink = ({text,linkText, href}: FooterLinkProps) => {
-    return (
-        <div className="text-center pt-4">
-            <p className="text-sm text-gray-500">
-                {text}{''}
-                <Link href={href} className="footer-link">
-                    {linkText}
-                </Link>
-            </p>
+type FooterLinkProps = {
+    text: string;
+    linkText: string;
+    href: string;
+};
 
-        </div>
-    )
-}
-export default FooterLink
+const FooterLink = ({
+                        text,
+                        linkText,
+                        href,
+                    }: FooterLinkProps) => {
+    return (
+        <p className="mt-6 text-center text-sm text-gray-400">
+            {text}
+            <Link
+                href={href}
+                className="font-medium text-white transition-colors hover:text-yellow-500"
+            >
+                {linkText}
+            </Link>
+        </p>
+    );
+};
+
+export default FooterLink;
