@@ -2,8 +2,9 @@ import Link from "next/link";
 import Image from "next/image";
 import NavItems from "@/components/NavItems";
 import UserDropdown from "@/components/UserDropdown";
+import {User} from "better-auth";
 
-export default function Header() {
+export default function Header({ user }: { user: User }) {
     return (
         <header className="sticky top-0 z-50 header">
             <div className="container header-wrapper flex items-center justify-between gap-4">
@@ -30,7 +31,7 @@ export default function Header() {
 
                 {/* User Dropdown - Desktop and Mobile */}
                 <div className="flex shrink-0 items-center sm:ml-auto">
-                    <UserDropdown />
+                    <UserDropdown user={user} />
                 </div>
 
             </div>
