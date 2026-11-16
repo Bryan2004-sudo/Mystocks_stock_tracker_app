@@ -17,7 +17,6 @@ type SignInFormData = {
 
 const SignIn = () => {
     const router = useRouter();
-
     const {
         register,
         handleSubmit,

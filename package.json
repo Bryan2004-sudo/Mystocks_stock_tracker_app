@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:db": "node test-db.mjs"
   },
   "dependencies": {
     "@better-auth/infra": "^0.4.30",
