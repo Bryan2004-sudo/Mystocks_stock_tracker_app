@@ -1,35 +1,74 @@
-import mongoose from 'mongoose';
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://bryan:o8aLd9uMcXamCxRC@cluster0.exosspt.mongodb.net/?retryWrites=true&w=majority';
+import mongoose from "mongoose";
 
-async function testConnection() {
-    console.log('\n=== MongoDB Connection Test ===\n');
-    console.log('Connection string:', MONGODB_URI.replace(/\/\/([^:]+):([^@]+)@/, '//$1:***@'));
+const MONGODB_URI = process.env.MONGODB_URI;
+
+async function testConnection(): Promise<void> {
+    console.log("\n=== MongoDB Connection Test ===\n");
+
+    if (!MONGODB_URI) {
+        console.error("MONGODB_URI is missing from your environment.");
+        process.exitCode = 1;
+        return;
+    }
+
+    console.log("Connection string: Configured via environment");
 
     try {
-        console.log('\nConnecting...');
-        const conn = await mongoose.connect(MONGODB_URI, { bufferCommands: false });
-        const version = await mongoose.connection.db.admin().serverStatus();
+        console.log("\nConnecting...");
 
-        console.log('\n✅ Connected successfully!');
-        console.log('  Database:', mongoose.connection.name);
-        console.log('  MongoDB version:', version.version);
-        console.log('  Uptime (seconds):', version.uptimeSeconds);
+        const conn = await mongoose.connect(MONGODB_URI, {
+            bufferCommands: false,
+            ...(process.env.MONGODB_DB
+                ? { dbName: process.env.MONGODB_DB }
+                : {}),
+        });
+
+        // Get the MongoDB database instance
+        const db = conn.connection.db;
+
+        if (!db) {
+            throw new Error(
+                "MongoDB database connection is unavailable."
+            );
+        }
+
+        // Get MongoDB server information
+        const version = await db.admin().serverStatus();
+
+        console.log("\n✅ Connected successfully!");
+        console.log("  Database:", conn.connection.name);
+        console.log("  MongoDB version:", version.version);
+        console.log(
+            "  Uptime (seconds):",
+            version.uptimeSeconds
+        );
 
         // Test a simple operation
-        const collections = await mongoose.connection.db.listCollections().toArray();
-        console.log('  Collections:', collections.length);
+        const collections = await db
+            .listCollections()
+            .toArray();
 
+        console.log("  Collections:", collections.length);
+
+        console.log("\n=== Test Passed ===\n");
+    } catch (err: unknown) {
+        console.error("\n❌ Connection failed!");
+
+        console.error(
+            "  Error:",
+            err instanceof Error
+                ? err.message
+                : String(err)
+        );
+
+        console.error("\n=== Test Failed ===\n");
+
+        process.exitCode = 1;
+    } finally {
         await mongoose.disconnect();
-        console.log('\n✅ Disconnected cleanly.');
-        console.log('\n=== Test Passed ===\n');
-        process.exit(0);
-    } catch (err: any) {
-        console.error('\n❌ Connection failed!');
-        console.error('  Error:', err.message);
-        console.error('\n=== Test Failed ===\n');
-        process.exit(1);
+        console.log("\n✅ MongoDB connection closed.");
     }
 }
 
-testConnection();
+void testConnection();
