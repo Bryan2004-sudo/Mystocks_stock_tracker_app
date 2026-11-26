@@ -1,3 +1,4 @@
+
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { nextCookies } from "better-auth/next-js";
@@ -45,7 +46,8 @@ const initializeAuth = async () => {
     });
 };
 
-let authPromise: ReturnType<typeof initializeAuth> | null = null;
+let authPromise: ReturnType<typeof initializeAuth> | null =
+    null;
 
 export const getAuth = () => {
     if (!authPromise) {
